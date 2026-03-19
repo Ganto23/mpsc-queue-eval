@@ -3,7 +3,7 @@
 #include <vector>
 #include <atomic>
 #include "core/QueueConcept.hpp"
-#include "mutex/SpinlockQueueAlignas.hpp"
+#include "cas/BasicAtomicQueue.hpp"
 
 template <typename Q>
 void BM_MpscThroughput(benchmark::State& state) {
@@ -69,7 +69,7 @@ void BM_MpscThroughput(benchmark::State& state) {
 }
 
 // Register for 1, 2, and 4 producers (MPSC)
-BENCHMARK_TEMPLATE(BM_MpscThroughput, SpinlockQueueAlignas<int>)
+BENCHMARK_TEMPLATE(BM_MpscThroughput, BasicAtomicQueue<int>)
     ->Arg(1)
     ->Arg(2)
     ->Arg(3) 
