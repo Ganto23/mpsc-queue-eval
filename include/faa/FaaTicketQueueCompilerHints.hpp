@@ -4,7 +4,7 @@
 #include <bit>
 
 template <typename T, size_t Capacity = 8192>
-class FaaTicketQueue {
+class FaaTicketQueueCompilerHints {
     static_assert(std::has_single_bit(Capacity), "Capacity must be a power of two for bitwise wrapping");
 
     struct Node {
@@ -13,7 +13,7 @@ class FaaTicketQueue {
     };
 
 public:
-    FaaTicketQueue() : _queue(std::make_unique<Node[]>(Capacity)), _capacity(Capacity), _head(0), _tail(0) {
+    FaaTicketQueueCompilerHints() : _queue(std::make_unique<Node[]>(Capacity)), _capacity(Capacity), _head(0), _tail(0) {
         for (std::size_t i = 0; i < Capacity; i++) {
             _queue[i].seq_num.store(i, std::memory_order_relaxed);
         }
@@ -25,7 +25,7 @@ public:
         
         while (true) {
             std::size_t seq_num = _queue[index].seq_num.load(std::memory_order_acquire);
-            if (seq_num == ticket) {
+            if (seq_num == ticket) [[likely]] {
                 _queue[index].data = item;
                 _queue[index].seq_num.store(ticket + 1, std::memory_order_release);
                 return true;
@@ -40,7 +40,7 @@ public:
         
         while (true) {
             std::size_t seq_num = _queue[index].seq_num.load(std::memory_order_acquire);
-            if (seq_num == ticket) {
+            if (seq_num == ticket) [[likely]] {
                 _queue[index].data = std::move(item);
                 _queue[index].seq_num.store(ticket + 1, std::memory_order_release);
                 return true;
@@ -54,7 +54,7 @@ public:
         std::size_t index = ticket & (_capacity - 1);
 
         std::size_t seq_num = _queue[index].seq_num.load(std::memory_order_acquire);
-        if (seq_num == ticket + 1) {
+        if (seq_num == ticket + 1) [[likely]] {
             item = std::move(_queue[index].data);
             _head.store(ticket + 1, std::memory_order_relaxed);
             _queue[index].seq_num.store(ticket + _capacity, std::memory_order_release);
