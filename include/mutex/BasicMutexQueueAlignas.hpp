@@ -10,7 +10,7 @@ public:
 
     bool try_enqueue(const T& item) {
         std::lock_guard<std::mutex> lock(_mtx);
-        if ((_tail - _head) == _capacity) {
+        if ((_tail - _head) == _capacity) [[unlikely]] {
             return false;
         }
         _queue[_tail & (_capacity - 1)] = item;
@@ -19,7 +19,7 @@ public:
     }
     bool try_enqueue(T&& item) {
         std::lock_guard<std::mutex> lock(_mtx);
-        if ((_tail - _head) == _capacity) {
+        if ((_tail - _head) == _capacity) [[unlikely]] {
             return false;
         }
         _queue[_tail & (_capacity - 1)] = std::move(item);
