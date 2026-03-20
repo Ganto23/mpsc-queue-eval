@@ -1,3 +1,4 @@
+#pragma once
 #include <mutex>
 #include <vector>
 #include <cstddef>
@@ -57,6 +58,7 @@ public:
             }
         }
     }
+    /*
     bool try_dequeue(T& item) {
         std::size_t current_head = _head.load(std::memory_order_relaxed);
         std::size_t current_tail = _tail.load(std::memory_order_acquire);
@@ -74,6 +76,26 @@ public:
         item = data;
         _queue[index].store(static_cast<T>(-1), std::memory_order_release);
         _head.store(current_head + 1, std::memory_order_relaxed);
+        return true;
+    }
+    */
+
+    bool try_dequeue(T& item) {
+        std::size_t current_head = _head.load(std::memory_order_relaxed);
+        std::size_t current_tail = _tail.load(std::memory_order_acquire);
+
+        if (current_head == current_tail) return false;
+
+        std::size_t index = current_head & (_capacity - 1);
+        T data = _queue[index].load(std::memory_order_acquire);
+
+        // FIX: Instead of a while loop, just return false if the producer 
+        // hasn't finished writing the data yet.
+        if (data == static_cast<T>(-1)) return false;
+
+        item = data;
+        _queue[index].store(static_cast<T>(-1), std::memory_order_release);
+        _head.store(current_head + 1, std::memory_order_release); // Use release here!
         return true;
     }
 

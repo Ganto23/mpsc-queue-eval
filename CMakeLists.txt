@@ -8,21 +8,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # HFT & Bare-Metal Compiler Flags
 # -O3: Maximum speed optimization
-# -mcpu=cortex-a76: Tells GCC to generate assembly specifically tuned for the Pi 5's architecture
-# -Wall -Wextra -Wpedantic: Catch all warnings (essential for dangerous lock-free code)
+# -mcpu=cortex-a76: Generates assembly specifically tuned for the Pi 5
+# -Wall -Wextra -Wpedantic: Catch all warnings
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mcpu=cortex-a76 -Wall -Wextra -Wpedantic")
 
-# Add the pthread library (required for Linux threading and affinity)
+# Add the pthread library (required for std::thread and pthread_setaffinity_np)
 find_package(Threads REQUIRED)
 
-# Define our main benchmarking executable
-add_executable(mpsc_bench main.cpp)
-
-# Link threads to the executable
-target_link_libraries(mpsc_bench PRIVATE Threads::Threads)
-
-
-
+# --- Google Benchmark Setup ---
 include(FetchContent)
 
 set(BENCHMARK_ENABLE_GTEST_TESTS OFF CACHE BOOL "Disable internal benchmark tests" FORCE)
@@ -35,9 +28,17 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googlebenchmark)
 
-# Add your benchmark executable
-add_executable(queue_bench benchmarks/main_bench.cpp)
+# --- Executables ---
 
-# Link the benchmark library and your include folder
-target_link_libraries(queue_bench benchmark::benchmark_main)
-target_include_directories(queue_bench PRIVATE include)
+# 1. Your general playground (if you still want to compile main.cpp to test things)
+add_executable(main_app main.cpp)
+target_include_directories(main_app PRIVATE include)
+target_link_libraries(main_app PRIVATE Threads::Threads)
+
+# 2. The Heavyweight Benchmark Executable
+add_executable(mpsc_bench benchmarks/main_bench.cpp)
+target_include_directories(mpsc_bench PRIVATE include)
+
+# We link benchmark::benchmark (not benchmark_main, since we use BENCHMARK_MAIN() macro)
+# AND we must link Threads::Threads so our queue threads actually compile
+target_link_libraries(mpsc_bench PRIVATE benchmark::benchmark Threads::Threads)

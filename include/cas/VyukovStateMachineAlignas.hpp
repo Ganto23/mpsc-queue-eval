@@ -1,10 +1,11 @@
+#pragma once
 #include <cstddef>
 #include <atomic>
 #include <memory>
 #include <bit>
 
 template <typename T, size_t Capacity = 8192>
-class VyukovStateMachineCompilerHints {
+class VyukovStateMachineAlignas {
     static_assert(std::has_single_bit(Capacity), "Capacity must be a power of two for bitwise wrapping");
 
     struct alignas(64) Node {
@@ -13,7 +14,7 @@ class VyukovStateMachineCompilerHints {
     };
 
 public:
-    VyukovStateMachineCompilerHints() : _queue(std::make_unique<Node[]>(Capacity)), _capacity(Capacity), _head(0), _tail(0) {
+    VyukovStateMachineAlignas() : _queue(std::make_unique<Node[]>(Capacity)), _capacity(Capacity), _head(0), _tail(0) {
         for (std::size_t i = 0; i < Capacity; i++) {
             _queue[i].seq_num.store(i, std::memory_order_relaxed);
         }

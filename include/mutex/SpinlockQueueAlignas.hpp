@@ -1,8 +1,9 @@
+#pragma once
 #include <atomic>
 #include <vector>
 #include <cstddef>
 
-class Spinlock {
+class SpinlockAlignas {
 public:
     void lock() noexcept {
         while (flag.test_and_set(std::memory_order_acquire)) {asm volatile("yield" ::: "memory");}//flag.wait(true, std::memory_order_relaxed);
@@ -22,7 +23,7 @@ public:
     SpinlockQueueAlignas() : _queue(Capacity), _capacity(Capacity), _head(0), _tail(0){}
 
     bool try_enqueue(const T& item) {
-        std::lock_guard<Spinlock> lock(_mtx);
+        std::lock_guard<SpinlockAlignas> lock(_mtx);
         if ((_tail - _head) == _capacity) [[unlikely]] {
             return false;
         }
@@ -31,7 +32,7 @@ public:
         return true;
     }
     bool try_enqueue(T&& item) {
-        std::lock_guard<Spinlock> lock(_mtx);
+        std::lock_guard<SpinlockAlignas> lock(_mtx);
         if ((_tail - _head) == _capacity) [[unlikely]] {
             return false;
         }
@@ -40,7 +41,7 @@ public:
         return true;
     }
     bool try_dequeue(T& item) {
-        std::lock_guard<Spinlock> lock(_mtx);
+        std::lock_guard<SpinlockAlignas> lock(_mtx);
         if (_head == _tail) [[unlikely]] {
             return false;
         }
@@ -53,16 +54,16 @@ public:
         return _capacity;
     }
     bool is_empty() const {
-        std::lock_guard<Spinlock> lock(_mtx);
+        std::lock_guard<SpinlockAlignas> lock(_mtx);
         return _head == _tail;
     }
     bool is_full() const {
-        std::lock_guard<Spinlock> lock(_mtx);
+        std::lock_guard<SpinlockAlignas> lock(_mtx);
         return (_tail - _head) == _capacity;
     }
 
 private:
-    alignas(64) mutable Spinlock _mtx;
+    alignas(64) mutable SpinlockAlignas _mtx;
     std::vector<T> _queue;
     alignas(64) const std::size_t _capacity;
     alignas(64) std::size_t _head;

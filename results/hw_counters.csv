@@ -1,0 +1,6 @@
+# started on Fri Mar 20 00:44:10 2026
+
+84405820,,L1-dcache-load-misses,53936593734,100.00,0.13,of all L1-dcache accesses
+65134324397,,L1-dcache-loads,53936593734,100.00,,
+3545430,,branch-misses,53936593734,100.00,0.01,of all branches
+33715107338,,branches,53936593734,100.00,,
